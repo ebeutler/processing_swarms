@@ -1,3 +1,5 @@
+// Licence LGPL (see Licence.txt for details)
+
 Array agents;
 Light light = new Light();
 int[] bgColour = new int[]{0, 0, 255};

@@ -1,3 +1,5 @@
+// Licence LGPL (see Licence.txt for details)
+
 public class Light {
   private int x;
   private int y;

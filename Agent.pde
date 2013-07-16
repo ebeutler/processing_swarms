@@ -1,4 +1,6 @@
-public abstract class Agent {
+// Licence LGPL (see Licence.txt for details)
+
+public abstract class Agent extends Body{
   int MAX_MOVEMENT = 3;
   int x;
   int y;

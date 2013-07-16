@@ -1,3 +1,5 @@
+// Licence LGPL (see Licence.txt for details)
+
 public class AgentLight extends Agent {
   public AgentLight(int x, int y) {
     super(x, y);
