@@ -1,5 +1,6 @@
 // Licence LGPL (see Licence.txt for details)
 
+Physics physics;
 Array agents;
 Light light = new Light();
 int[] bgColour = new int[]{0, 0, 255};
@@ -25,10 +26,12 @@ void draw() {
 }
 
 void mouseClicked() {
+  int xpos = mouseX + round(random(-2, 2));
+  int ypos = mouseY + round(random(-2, 2));
   if(mouseButton == RIGHT) {
-    agents.push(new AgentDark(mouseX, mouseY));
+    agents.push(new AgentDark(xpos, ypos));
   } else {
-    agents.push(new AgentLight(mouseX, mouseY));
+    agents.push(new AgentLight(xpos, ypos));
   }
 }
 

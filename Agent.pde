@@ -1,6 +1,4 @@
-// Licence LGPL (see Licence.txt for details)
-
-public abstract class Agent extends Body{
+public abstract class Agent {
   int MAX_MOVEMENT = 3;
   int x;
   int y;
@@ -55,37 +53,35 @@ public abstract class Agent extends Body{
   abstract void move(Light light);
   
   public void move(Light light, boolean towardsLight) {
-    //set x, y, directionLeft
     if((abs(x - light.getX()) < 100) && (abs(y - light.getY()) < 100)) {
       int diffX = x - light.getX();
       int diffY = y - light.getY();
-      setFishDirection();
-      if(abs(diffX) > abs(diffY)) {
-        if(diffX != 0) {
-          diffY = round(diffY / (diffX / (float)MAX_MOVEMENT));
-        } else {
-          diffY = MAX_MOVEMENT;
-        }
-        diffX = MAX_MOVEMENT;
-      } else {
-        if(diffY != 0) {
-          diffX = round(diffX / (diffY / (float)MAX_MOVEMENT));
-        } else {
-          diffX = MAX_MOVEMENT;
-        }
-        diffY = MAX_MOVEMENT;
+      setFishDirection(diffX, towardsLight);
+      short sign = 1;
+      if(light.getY() > y) {
+        sign = -1;
       }
-      //console.log("movement (x, y):", diffX, diffY);
+      if(diffX != 0) {
+        diffY = sign * round(diffY / (diffX / (float)MAX_MOVEMENT));
+      } else {
+        diffY = sign * MAX_MOVEMENT;
+      }
+      if(diffY != 0) {
+        diffX = round(diffX / (diffY / (float)MAX_MOVEMENT));
+      } else {
+        diffX = MAX_MOVEMENT;
+      }
+      console.log("movement (x, y):", diffX, diffY);
       x += diffX;
       y += diffY;
-    } else {
+    } else { //fish is far from light
       if(random(0, 1) < 0.01) {
         directionLeft = !directionLeft;
       }
       if(directionLeft) {
-        x += round(random(0, 2));
+        x += round(random(0, 1));
       } else {
-        x += round(random(-2, 0));
+        x += round(random(-1, 0));
       }
       y += round(random(-2, 2));
     }
