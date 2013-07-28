@@ -1,80 +1,104 @@
+// Licence LGPL (see Licence.txt for details)
+
 public abstract class Agent {
-  int MAX_MOVEMENT = 3;
   int x;
   int y;
-  boolean directionLeft; 
-  int[] colour;
+  boolean directionLeft;
+  boolean towardsLight;
   
-  public Agent(int x, int y) {
+  public Agent(int x, int y, boolean towardsLight) {
     this.x = x;
     this.y = y;
+    this.towardsLight = towardsLight;
     directionLeft = random(0, 1) > 0.5;
-  }
-
-  int getSecondaryColour(int rnd) {
-    return rnd + (int)random(-20, 20);
+    fishSound.cue(0);
+    fishSound.play();
   }
   
   public void draw() {
+    PImage img = redFish;
+    if(towardsLight) { img = greenFish; }
     pushMatrix();
-    drawFishBody();
-    drawFishTail();
-    drawFishEye();
+    if(directionLeft) {
+      scale(-1.0, 1.0);
+      image(img, -x, y);
+    } else {
+      image(img, x, y);
+    }
     popMatrix();
   }
   
-  void drawFishBody() {
-    stroke(colour[0], colour[1], colour[2]);
-    fill(colour[0], colour[1], colour[2]);
-    ellipse(x, y, 27, 10);
-  }
-  
-  void drawFishTail() {
-    int xPos = x+13;
-    if(directionLeft) {
-      xPos = x-13;
+  public void move(Light light) {
+    int diffX = x - light.getX();
+    int adX = abs(diffX);
+    int diffY = y - light.getY();
+    int adY = abs(diffY);
+    if((!towardsLight || ((adX > LIGHT_PROXIMITY) && (adY > LIGHT_PROXIMITY))) 
+        && (adX < LIGHT_RADIUS) && (adY < LIGHT_RADIUS)) {
+      setFishDirection(diffX);
+      int sign = 1;
+      if(towardsLight) { sign = -1; }
+      x += sign * getMoveX(adX, adY, light.getX());
+      y += sign * getMoveY(adX, adY, light.getY());
+    } else { //fish is in the light or too far to see it
+      swarmOrRandomSwim();
     }
-    triangle(x, y, xPos, y-7, xPos, y+7);
-    stroke(bgColour[0], bgColour[1], bgColour[2]);
-    fill(bgColour[0], bgColour[1], bgColour[2]);
-    ellipse(xPos, y, 3, 12);
+    preventSwimmingOutOfScreen();
   }
   
-  void drawFishEye() {
-    stroke(0);
-    strokeWeight(3);
-    if(directionLeft) {
-      point(x + 7, y - 2);
+  void setFishDirection(int diffX) {
+    if(diffX < 0) {
+      directionLeft = true;
     } else {
-      point(x - 7, y - 2);
+      directionLeft = false;
     }
   }
   
-  abstract void move(Light light);
+  int getMoveX(int dx, int dy, int lightX) {
+    short sign = 1;
+    if(lightX > x) { sign = -1; }
+    if(dy != 0) {
+      if(dx > dy) {
+        return sign * MAX_MOVEMENT;
+      } else {
+        int dx = round(dx / (dy / (float)MAX_MOVEMENT));
+        if(sign * dx < 0) {
+          dx = sign * dx;
+        } 
+        return dx;
+      }
+    } else {
+      return sign * MAX_MOVEMENT;
+    } 
+  }
   
-  public void move(Light light, boolean towardsLight) {
-    if((abs(x - light.getX()) < 100) && (abs(y - light.getY()) < 100)) {
-      int diffX = x - light.getX();
-      int diffY = y - light.getY();
-      setFishDirection(diffX, towardsLight);
-      short sign = 1;
-      if(light.getY() > y) {
-        sign = -1;
-      }
-      if(diffX != 0) {
-        diffY = sign * round(diffY / (diffX / (float)MAX_MOVEMENT));
+  int getMoveY(int dx, int dy, int lightY) {
+    short sign = 1;
+    if(lightY > y) { sign = -1; }
+    if(dx != 0) {
+      if(dy > dx) {
+        return sign * MAX_MOVEMENT;
       } else {
-        diffY = sign * MAX_MOVEMENT;
+        return sign * round(dy / (dx / (float)MAX_MOVEMENT));
       }
-      if(diffY != 0) {
-        diffX = round(diffX / (diffY / (float)MAX_MOVEMENT));
-      } else {
-        diffX = MAX_MOVEMENT;
+    } else {
+      return sign * MAX_MOVEMENT;
+    }
+  }
+  
+  void swarmOrRandomSwim() {
+    Agent neighbor = attractedToOtherFish();
+    if(neighbor != null) {
+      int dx = x - neighbor.x;
+      int dy = y - neighbor.y;
+      if(((dx > 0) && !towardsLight) || ((dx < 0) && towardsLight)) {
+        directionLeft = true;
+      } else { 
+        directionLeft = false;
       }
-      console.log("movement (x, y):", diffX, diffY);
-      x += diffX;
-      y += diffY;
-    } else { //fish is far from light
+      x += -1 * getMoveX(abs(dx), abs(dy), neighbor.x);
+      y += -1 * getMoveY(abs(dx), abs(dy), neighbor.y);
+    } else {
       if(random(0, 1) < 0.01) {
         directionLeft = !directionLeft;
       }
@@ -85,6 +109,21 @@ public abstract class Agent {
       }
       y += round(random(-2, 2));
     }
+  }
+  
+  Agent attractedToOtherFish() {
+    for(int i = 0; i < agents.length; i++) {
+      int dx = abs(x - agents[i].x);
+      int dy = abs(y - agents[i].y);
+      if((this != agents[i]) && (dx <= SIGHT_RADIUS) && (dy <= SIGHT_RADIUS)
+          && (dx > LIGHT_PROXIMITY) && (dy > LIGHT_PROXIMITY)) {
+        return agents[i];
+      }
+    }
+    return null;
+  }
+  
+  void preventSwimmingOutOfScreen() {
     if(x < 0) {
       x = 0;
       directionLeft = !directionLeft;
@@ -95,13 +134,5 @@ public abstract class Agent {
     }
     if(y < 0) { y = 0; }
     if(y > height) { y = height; }
-  }
-  
-  void setFishDirection(int diffX, boolean towardsLight) {
-    if(diffX < 0) {
-      directionLeft = towardsLight;
-    } else {
-      directionLeft = !towardsLight;
-    }
   }
 }

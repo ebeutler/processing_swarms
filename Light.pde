@@ -1,8 +1,14 @@
 // Licence LGPL (see Licence.txt for details)
 
 public class Light {
+  private PImage img;
   private int x;
   private int y;
+  
+  public Light() {
+    imageMode(CENTER);
+    img = loadImage("light.png");
+  }
   
   public void setPos(int x, int y) {
     this.x = x;
@@ -10,9 +16,7 @@ public class Light {
   }
   
   public void draw() {
-    stroke(255, 255, 0);
-    fill(255, 255, 0);
-    ellipse(x, y, 20, 20);
+    image(img, x, y);
   }
   
   public int getX() {
